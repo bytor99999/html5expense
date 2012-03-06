@@ -15,7 +15,7 @@
  */
 package com.springsource.html5expense.integrations;
 
-import com.springsource.html5expense.ExpenseReportingService;
+import com.springsource.html5expense.EligibleChargeService;
 import org.springframework.integration.annotation.Header;
 import org.springframework.integration.annotation.ServiceActivator;
 
@@ -33,13 +33,13 @@ import java.util.Date;
 public class EligibleChargeProcessor {
 
     @Inject
-    private ExpenseReportingService expenseReportingService;
+    private EligibleChargeService eligibleChargeService;
 
     @ServiceActivator
     public void processNewEligibleCharge(@Header(EligibleChargeProcessorHeaders.EC_DATE) Date date,
                                          @Header(EligibleChargeProcessorHeaders.EC_MERCHANT) String merchant,
                                          @Header(EligibleChargeProcessorHeaders.EC_CATEGORY) String category,
                                          @Header(EligibleChargeProcessorHeaders.EC_AMOUNT) BigDecimal amount) throws Exception {
-        this.expenseReportingService.createEligibleCharge(date, merchant, category, amount);
+        eligibleChargeService.createEligibleCharge(date, merchant, category, amount);
     }
 }

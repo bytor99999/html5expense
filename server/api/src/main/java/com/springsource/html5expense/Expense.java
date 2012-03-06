@@ -20,13 +20,19 @@ import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
 
+@NamedQueries({
+        @NamedQuery(name = "expense.getAllExpensesForExpenseReport",
+                    query = "SELECT e " +
+                              "FROM Expense e " +
+                             "WHERE e.expenseReport.id  = :id")
+})
 @Entity
 @Table(name = "EXPENSE")
 public class Expense {
 
     @GeneratedValue(strategy = javax.persistence.GenerationType.AUTO)
     @Id
-    private Integer id;
+    private Long id;
 
     @ManyToOne
     private ExpenseReport expenseReport;
@@ -57,7 +63,7 @@ public class Expense {
         this.chargeId = chargeId;
     }
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 

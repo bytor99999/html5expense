@@ -15,9 +15,9 @@
  */
 package com.springsource.html5expense.controllers;
 
-import com.springsource.html5expense.ExpenseReportingService;
+// com.springsource.html5expense.ExpenseReportingService;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.ModelMap;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
@@ -26,14 +26,11 @@ import javax.inject.Inject;
 @Controller
 public class ExpenseReportingViewController {
 
-    @Inject
-    private ExpenseReportingService expenseReportingService;
+    //@Inject
+    //private ExpenseReportingService expenseReportingService;
 
     @RequestMapping(value = "/home", method = RequestMethod.GET)
-    public String showExpenses(ModelMap map) throws Exception {
-
-
-
+    public String showExpenses(Model map) throws Exception {
         return "receipts";
     }
 }

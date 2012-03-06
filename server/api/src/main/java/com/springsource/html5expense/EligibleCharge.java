@@ -18,6 +18,8 @@ package com.springsource.html5expense;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.Table;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -25,6 +27,18 @@ import java.util.Date;
 /**
  * Simple entity to describe a charge that has yet to be reconciled.
  */
+@NamedQueries({
+        @NamedQuery(name = "eligibleCharge.getAll",
+                    query = "SELECT er " +
+                              "FROM EligibleCharge er "),
+        @NamedQuery(name = "eligibleCharge.getAllByListOfIds",
+                    query = "SELECT e " +
+                              "FROM EligibleCharge e " +
+                             "WHERE e.id in :ids"),
+        @NamedQuery(name = "eligibleCharge.deletedByListOfIdes",
+                    query = "DELETE FROM EligibleCharge e " +
+                                  "WHERE e.id IN :ids")
+})
 @Entity
 @Table(name = "ELIGIBLE_CHARGE")
 public class EligibleCharge {

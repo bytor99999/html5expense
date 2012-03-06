@@ -16,9 +16,11 @@
 package com.springsource.html5expense.controllers;
 
 import com.springsource.html5expense.EligibleCharge;
+import com.springsource.html5expense.EligibleChargeService;
 import com.springsource.html5expense.Expense;
 import com.springsource.html5expense.ExpenseReport;
 import com.springsource.html5expense.ExpenseReportingService;
+import com.springsource.html5expense.ExpenseService;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,7 +30,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -47,26 +48,32 @@ public class ExpenseReportingApiController {
     private Log log = LogFactory.getLog(getClass());
 
     @Inject
-    private ExpenseReportingService service;
+    private ExpenseReportingService expenseReportingService;
+    
+    @Inject
+    private ExpenseService expenseService;
+
+    @Inject
+    private EligibleChargeService eligibleChargeService;
 
     @ResponseStatus(HttpStatus.OK)
     @RequestMapping(method = RequestMethod.DELETE, value = "/expenses/{expenseId}")
-    public void restoreExpenseToEligibleCharge(@PathVariable("expenseId") Integer expenseId) {
-        Expense ex = service.getExpense(expenseId);
-        service.restoreEligibleCharges(Arrays.asList(ex.getId()));
+    public void restoreExpenseToEligibleCharge(@PathVariable("expenseId") Long expenseId) {
+        Expense ex = expenseService.getExpense(expenseId);
+        eligibleChargeService.restoreEligibleCharges(Arrays.asList(ex.getId()));
     }
 
 
     @RequestMapping(method = RequestMethod.DELETE, value = "/{reportId}")
     @ResponseStatus(HttpStatus.OK)
     public void deleteReport(@PathVariable("reportId") Long reportId) {
-        this.service.deleteExpenseReport(reportId);
+        this.expenseReportingService.deleteExpenseReport(reportId);
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/{reportId}/expenses", produces = "application/json")
     @ResponseBody
-    public Collection<Expense> expenseForExpenseReport(HttpServletRequest request, @PathVariable("reportId") Long reportId) {
-        return this.service.getExpensesForExpenseReport(reportId);
+    public Collection<Expense> expenseForExpenseReport(@PathVariable("reportId") Long reportId) {
+        return expenseService.getExpensesForExpenseReport(reportId);
     }
 
     /**
@@ -78,7 +85,7 @@ public class ExpenseReportingApiController {
     @RequestMapping(method = RequestMethod.POST)
     @ResponseBody
     public Long createReport(@RequestParam(required = true) String purpose) {
-        return service.createReport(purpose);
+        return expenseReportingService.createReport(purpose);
     }
 
     /**
@@ -90,12 +97,12 @@ public class ExpenseReportingApiController {
     @RequestMapping(value = "/eligible-charges", method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public Collection<EligibleCharge> getEligibleCharges() {
-        return service.getEligibleCharges();
+        return eligibleChargeService.getEligibleCharges();
     }
 
     private String buildMimeTypeForExpense(Expense e) {
         String ext = e.getReceiptExtension();
-        String mime = null;
+        String mime;
         if (ext.equalsIgnoreCase("jpg") || ext.equalsIgnoreCase("jpeg")) {
             mime = "image/jpeg";
         } else if (ext.equalsIgnoreCase("gif"))
@@ -107,11 +114,11 @@ public class ExpenseReportingApiController {
 
 
     @RequestMapping(value = "/receipts/{expenseId}")
-    public void renderMedia(HttpServletResponse httpServletResponse, OutputStream os, @PathVariable("expenseId") Integer expenseId) {
+    public void renderMedia(HttpServletResponse httpServletResponse, OutputStream os, @PathVariable("expenseId") Long expenseId) {
 
-        Expense expense = service.getExpense(expenseId);
+        Expense expense = expenseService.getExpense(expenseId);
         httpServletResponse.setContentType(buildMimeTypeForExpense(expense));
-        InputStream is = service.retrieveReceipt(expenseId);
+        InputStream is = eligibleChargeService.retrieveReceipt(expenseId);
         try {
             IOUtils.copyLarge(is, os);
         } catch (Exception e1) {
@@ -140,7 +147,7 @@ public class ExpenseReportingApiController {
     @RequestMapping(value = "/{reportId}/expenses", method = RequestMethod.POST, produces = "application/json")
     @ResponseBody
     public Collection<Expense> createExpenses(@PathVariable Long reportId, @RequestParam(required = true, value = "chargeId") Long chargeId) {
-        return service.createExpenses(reportId, Arrays.asList(chargeId));
+        return expenseService.createExpenses(reportId, Arrays.asList(chargeId));
     }
 
     private String findExtensionFromFileName(String fn) {
@@ -153,14 +160,14 @@ public class ExpenseReportingApiController {
 
     @RequestMapping(value = "/receipts", method = RequestMethod.POST)
     @ResponseBody
-    public String attachReceipt(@RequestParam("reportId") Long reportId, @RequestParam("expenseId") Integer expenseId, @RequestParam("file") MultipartFile file) {
+    public String attachReceipt(@RequestParam("reportId") Long reportId, @RequestParam("expenseId") Long expenseId, @RequestParam("file") MultipartFile file) {
         try {
             byte[] bytesForImage = file.getBytes();
             String ext = findExtensionFromFileName(file.getOriginalFilename());
             if (ext != null) {
                 ext = ext.trim().toLowerCase();
             }
-            return service.attachReceipt(reportId, expenseId, ext, bytesForImage);
+            return eligibleChargeService.attachReceipt(reportId, expenseId, ext, bytesForImage);
         } catch (Throwable th) {
             if (log.isErrorEnabled()) {
                 log.error("Something went wrong trying to write the file out.", th);
@@ -177,13 +184,13 @@ public class ExpenseReportingApiController {
      */
     @RequestMapping(value = "/{reportId}", method = RequestMethod.POST)
     public void submitReport(@PathVariable Long reportId) {
-        service.submitReport(reportId);
+        expenseReportingService.submitReport(reportId);
     }
 
     @RequestMapping(value = "/{reportId}", method = RequestMethod.GET)
     @ResponseBody
     public ExpenseReport getReport(@PathVariable Long reportId) {
-        return service.getExpenseReport(reportId);
+        return expenseReportingService.getExpenseReport(reportId);
     }
 
     /**
@@ -194,7 +201,7 @@ public class ExpenseReportingApiController {
     @RequestMapping(method = RequestMethod.GET, produces = "application/json")
     @ResponseBody
     public List<ExpenseReport> getOpenReports() {
-        return service.getOpenReports();
+        return expenseReportingService.getOpenReports();
     }
 
     /**
@@ -206,19 +213,19 @@ public class ExpenseReportingApiController {
     public
     @ResponseBody
     List<ExpenseReport> getSubmittedReports() {
-        return service.getSubmittedReports();
+        return expenseReportingService.getSubmittedReports();
     }
 
     @RequestMapping(method = RequestMethod.POST, value = "/{reportId}/purpose")
     @ResponseStatus(value = HttpStatus.OK)
     public void updateReportPurpose(@PathVariable("reportId") Long reportId, String title) {
-        service.updateExpenseReportPurpose(reportId, title);
+        expenseReportingService.updateExpenseReportPurpose(reportId, title);
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "/open-reports")
     @ResponseBody
     public Collection<ExpenseReport> openReports() {
-        return service.getOpenReports();
+        return expenseReportingService.getOpenReports();
     }
 
 }

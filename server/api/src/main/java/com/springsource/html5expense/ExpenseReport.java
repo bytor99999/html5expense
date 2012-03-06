@@ -23,6 +23,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+@NamedQueries({
+        @NamedQuery(name = "expenseReport.findOpenReports",
+                    query = "SELECT e " +
+                              "FROM ExpenseReport e " +
+                             "WHERE e.state = :new " +
+                                "OR e.state = :rejected"),
+        @NamedQuery(name = "expenseReport.findInSubmittedReports",
+                    query = "SELECT er " +
+                              "FROM ExpenseReport er " +
+                             "WHERE er.state = :in_review " +
+                                "OR er.state = :approved")
+})
 @Entity
 @Table(name = "EXPENSE_REPORT")
 public class ExpenseReport {
@@ -88,7 +100,7 @@ public class ExpenseReport {
         return expense;
     }
 
-    public void attachReceipt(Integer expenseId, String receipt, String key) {
+    public void attachReceipt(Long expenseId, String receipt, String key) {
         assertOpen();
         getExpense(expenseId).attachReceipt(receipt, key);
     }
@@ -135,7 +147,7 @@ public class ExpenseReport {
         return false;
     }
 
-    private Expense getExpense(Integer id) {
+    private Expense getExpense(Long id) {
         for (Expense expense : expenses) {
             if (expense.getId().equals(id)) {
                 return expense;

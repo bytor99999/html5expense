@@ -16,7 +16,8 @@
 package com.springsource.html5expense.config;
 
 import com.springsource.html5expense.EligibleCharge;
-import com.springsource.html5expense.services.JpaExpenseReportingService;
+import com.springsource.html5expense.repositories.JpaExpenseReportRepository;
+import com.springsource.html5expense.services.ExpenseReportingServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -47,7 +48,7 @@ import java.util.Map;
 @Configuration
 @EnableTransactionManagement
 @Import({LocalDataSourceConfig.class, CloudDataSourceConfig.class/*, SecurityConfig.class*/})
-@ComponentScan(basePackageClasses = JpaExpenseReportingService.class)
+@ComponentScan(basePackageClasses = {ExpenseReportingServiceImpl.class, JpaExpenseReportRepository.class})
 public class ComponentConfig {
 
     @Inject

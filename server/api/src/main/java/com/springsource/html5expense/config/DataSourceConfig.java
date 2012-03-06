@@ -15,8 +15,6 @@
  */
 package com.springsource.html5expense.config;
 
-import com.mongodb.Mongo;
-import org.springframework.data.mongodb.MongoDbFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 
 import javax.sql.DataSource;
